@@ -16,16 +16,47 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TransformValueInput } from "@/utils/onInputFieldTime";
 import { Profile } from "./Profile";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { getMonth, getYear } from "date-fns";
 
 export function AddPoint() {
   const form = useForm<ValidatorFormPoint>({
     resolver: zodResolver(formPointSchema),
   });
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [dateMonth, setDateMonth] = useState<Date | undefined>(new Date());
+  console.log("dateMonth", dateMonth);
+  const { mutate: addPoint } = useMutation({
+    mutationFn: async (data: ValidatorFormPoint) => {
+      const payload = {
+        ...data,
+        date,
+      };
+      const { data: dataResponse } = await axios.post(
+        `/api/point/create`,
+        payload
+      );
+
+      return dataResponse;
+    },
+  });
 
   function handleSubmitAddPoint(data: ValidatorFormPoint) {
-    console.log(data);
+    // console.log(data);
+    addPoint(data);
   }
+
+  const { data } = useQuery(["getByMonth", dateMonth], async () => {
+    const { data } = await axios.get(`/api/point/getByYearAndMonth`, {
+      params: {
+        year: getYear(dateMonth!),
+        month: getMonth(dateMonth!),
+      },
+    });
+
+    return data;
+  });
 
   return (
     <div className="w-[400px] grid justify-center pt-4 bg-zinc-800 border border-zinc-700 rounded shadow overflow-auto">
@@ -38,6 +69,7 @@ export function AddPoint() {
               mode="single"
               selected={date}
               onSelect={setDate}
+              onMonthChange={setDateMonth}
               disabled={[{ dayOfWeek: [0, 6] }, new Date(2023, 6, 13)]}
               showOutsideDays={false}
               className=""
@@ -45,6 +77,7 @@ export function AddPoint() {
                 day_selected:
                   "bg-zinc-900 rounded hover:bg-zinc-900 border border-zinc-700",
                 day_today: "text-green-500 hover:text-green-500",
+                nav_button: "border-none",
               }}
             />
             {date ? (
@@ -60,13 +93,13 @@ export function AddPoint() {
           </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmitAddPoint)}>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <FormField
                   control={form.control}
                   name="time1"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Entrada</FormLabel>
+                      <FormLabel>Entrada 1</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="00:00"
@@ -82,7 +115,7 @@ export function AddPoint() {
                   name="time2"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Entrada</FormLabel>
+                      <FormLabel>Saída 1</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="00:00"
@@ -98,7 +131,7 @@ export function AddPoint() {
                   name="time3"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Entrada</FormLabel>
+                      <FormLabel>Entrada 2</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="00:00"
@@ -114,7 +147,7 @@ export function AddPoint() {
                   name="time4"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Entrada</FormLabel>
+                      <FormLabel>Saída 2</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="00:00"

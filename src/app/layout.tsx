@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Promises } from "@/components/promises";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {children}
+        <Promises>{children}</Promises>
         <Toaster />
       </body>
     </html>
