@@ -15,15 +15,15 @@ export async function GET(req: Request) {
     const month = Number(url.searchParams.get("month"));
     const year = Number(url.searchParams.get("year"));
 
-    const firstDayOfMonth = new Date(year, month - 1, 1);
-    const lastDayOfMonth = new Date(year, month, 0);
+    const firstDayOfMonth = new Date(year, 0, 0);
+    const lastDayOfMonth = new Date(year, 12, 0);
 
     const points = await db.point.findMany({
       where: {
         userId: session.user.id,
         createdAt: {
           gte: firstDayOfMonth,
-          lte: lastDayOfMonth,
+          lt: lastDayOfMonth,
         },
       },
     });
@@ -32,6 +32,8 @@ export async function GET(req: Request) {
       ...point,
       total: point.time2 - point.time1 + (point.time4 - point.time3),
     }));
+
+    console.log("points all", points);
 
     return new Response(
       JSON.stringify({
@@ -43,7 +45,7 @@ export async function GET(req: Request) {
       return new Response("Invalid request data passed", { status: 422 });
     }
 
-    return new Response("Could not add point, please try again later", {
+    return new Response("invalid, please try again later", {
       status: 500,
     });
   }

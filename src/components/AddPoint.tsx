@@ -19,19 +19,21 @@ import { Profile } from "./Profile";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { getMonth, getYear } from "date-fns";
+import { usePoint } from "@/contexts/PointProvider";
+import { useToast } from "@/hooks/use-toast";
 
 export function AddPoint() {
+  const { dataPoint, onSetDate } = usePoint();
+  const { toast } = useToast();
   const form = useForm<ValidatorFormPoint>({
     resolver: zodResolver(formPointSchema),
   });
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [dateMonth, setDateMonth] = useState<Date | undefined>(new Date());
-  console.log("dateMonth", dateMonth);
+
   const { mutate: addPoint } = useMutation({
     mutationFn: async (data: ValidatorFormPoint) => {
       const payload = {
         ...data,
-        date,
+        datePoint: dataPoint,
       };
       const { data: dataResponse } = await axios.post(
         `/api/point/create`,
@@ -40,23 +42,34 @@ export function AddPoint() {
 
       return dataResponse;
     },
+    onSuccess: () => {
+      form.reset();
+
+      return toast({
+        title: "Ponto Criado com sucesso",
+      });
+    },
   });
 
   function handleSubmitAddPoint(data: ValidatorFormPoint) {
-    // console.log(data);
     addPoint(data);
   }
 
-  const { data } = useQuery(["getByMonth", dateMonth], async () => {
-    const { data } = await axios.get(`/api/point/getByYearAndMonth`, {
-      params: {
-        year: getYear(dateMonth!),
-        month: getMonth(dateMonth!),
-      },
-    });
+  // const { data } = useQuery(
+  //   ["getByMonth", 2023],
+  //   async () => {
+  //     const { data } = await axios.get(`/api/point/getByYear`, {
+  //       params: {
+  //         year: 2023,
+  //       },
+  //     });
 
-    return data;
-  });
+  //     return data.points;
+  //   },
+  //   {
+  //     refetchOnWindowFocus: false,
+  //   }
+  // );
 
   return (
     <div className="w-[400px] grid justify-center pt-4 bg-zinc-800 border border-zinc-700 rounded shadow overflow-auto">
@@ -67,9 +80,9 @@ export function AddPoint() {
             <Calendar
               locale={ptBr}
               mode="single"
-              selected={date}
-              onSelect={setDate}
-              onMonthChange={setDateMonth}
+              selected={dataPoint}
+              onSelect={onSetDate}
+              onMonthChange={onSetDate}
               disabled={[{ dayOfWeek: [0, 6] }, new Date(2023, 6, 13)]}
               showOutsideDays={false}
               className=""
@@ -80,10 +93,10 @@ export function AddPoint() {
                 nav_button: "border-none",
               }}
             />
-            {date ? (
+            {dataPoint ? (
               <span className="text-sm text-zinc-300">
                 <strong>Data Selecionada:</strong>{" "}
-                {format(new Date(date), "dd 'de' MMM 'de' yyyy")}
+                {format(new Date(dataPoint), "dd 'de' MMM 'de' yyyy")}
               </span>
             ) : (
               <span className="text-sm text-red-300">
@@ -103,7 +116,7 @@ export function AddPoint() {
                       <FormControl>
                         <Input
                           placeholder="00:00"
-                          onInput={TransformValueInput}
+                          // onInput={TransformValueInput}
                           {...field}
                         />
                       </FormControl>
@@ -162,7 +175,7 @@ export function AddPoint() {
 
               <Button
                 type="submit"
-                disabled={!date}
+                disabled={!dataPoint}
                 className="bg-green-500 rounded w-full mt-4 hover:bg-green-600 uppercase"
               >
                 Adicionar
